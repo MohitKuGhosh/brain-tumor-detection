@@ -5,14 +5,11 @@ from keras.models import load_model
 from PIL import Image
 import streamlit.components.v1 as components
 
-# ==========================================
-# SETUP
-# ==========================================
-
-# Page settings
+# THIS IS THE SETUP
+# Page setting
 st.set_page_config(page_title="Brain Tumor Check", page_icon="🧠", layout="wide")
 
-# Custom CSS for Dark Theme
+# CSS for Dark Theme
 st.markdown("""
     <style>
     html, body, [class*="css"] {
@@ -48,46 +45,37 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ==========================================
-# MODEL LOADING
-# ==========================================
-
-# 1. Update Labels to match Binary Classification (Alphabetical Order)
+# THIS PART IS MODEL LOADING
+# Update Labels to match Binary Classification
 labels = ['Healthy', 'Tumor']
 
-# 2. Load the model
+# Load the model
 try:
-    # Ensure this matches the filename saved by your binary training script
+    # Ensure this matches the filename saved by my binary training script
     model_path = "Brain_Tumor_Binary.h5" 
     model = load_model(model_path, compile=False)
 except IOError:
     st.error("⚠️ Model file not found! Please ensure 'Brain_Tumor_Binary.h5' is in the folder.")
     st.stop()
 
-# ==========================================
-# PREPROCESSING
-# ==========================================
-
+# PRE-PROCESSING
 def preprocess_image(img):
-    # 1. Resize to 64x64 (Matches your binary training code)
+    # Resize to 64x64 (for matching my binary training code)
     img = img.resize((64, 64))
     
-    # 2. Convert to array
+    # Convert to array
     img_array = tf.keras.preprocessing.image.img_to_array(img)
     
-    # 3. Handle RGBA images
+    # Handle RGBA images
     if img_array.shape[-1] == 4:
         img_array = img_array[:, :, :3]
         
-    # 4. Expand dims to create batch (1, 64, 64, 3)
+    # Expand dims to create batch
     img_array = np.expand_dims(img_array, axis=0)
     
     return img_array
 
-# ==========================================
 # UI LAYOUT
-# ==========================================
-
 spacer1, left_col, mid_spacer, right_col, spacer2 = st.columns([0.5, 2.5, 0.5, 3, 0.5])
 
 # LEFT COLUMN
@@ -111,7 +99,7 @@ with left_col:
 
             result_label = labels[class_index]
             
-            # Color logic: Green for Healthy, Red for Tumor
+            # Color: Green for Healthy, Red for Tumor
             if result_label == "Healthy":
                 result_color = "#00ff88" # Green
                 message = "Analysis suggests the brain is Healthy."
