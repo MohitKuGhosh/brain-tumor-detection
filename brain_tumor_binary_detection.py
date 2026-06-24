@@ -23,10 +23,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 print ('Modules loaded')
-
-# ==========================================
-# 1. DATASET SETUP & BINARY MAPPING
-# ==========================================
+# DATASET SETUP AND  BINARY MAPPING
 print("\n--- DATASET SETUP ---")
 train_data_dir = input("Please paste the full path to your TRAINING folder: ").strip().strip('"')
 test_data_dir = input("Please paste the full path to your TESTING folder: ").strip().strip('"')
@@ -46,7 +43,7 @@ def create_dataframe(data_dir):
             fpath = os.path.join(foldpath, file)
             filepaths.append(fpath)
             
-            # --- BINARY MAPPING LOGIC ---
+            # BINARY MAPPING LOGIC
             if fold.lower() in ['no tumor', 'notumor', 'no_tumor']:
                 labels.append('Healthy')
             else:
@@ -66,15 +63,13 @@ print(f"\nTraining Set: {len(train_df)} images")
 print(f"Validation Set: {len(valid_df)} images")
 print(f"Test Set: {len(test_df)} images")
 
-# ==========================================
-# 2. PREPROCESSING & AUGMENTATION
-# ==========================================
+# PRE-PROCESSING AND AUGMENTATION
 batch_size = 16
 img_size = (64, 64)
 channels = 3
 img_shape = (img_size[0], img_size[1], channels)
 
-# IMPROVEMENT 1: Data Augmentation
+# Data Augmentation
 # This rotates and flips images to force the model to learn features
 tr_gen = ImageDataGenerator(
     horizontal_flip=True,
@@ -89,16 +84,14 @@ train_gen = tr_gen.flow_from_dataframe(train_df, x_col='filepaths', y_col='label
 valid_gen = ts_gen.flow_from_dataframe(valid_df, x_col='filepaths', y_col='labels', target_size=img_size, class_mode='categorical', color_mode='rgb', shuffle=True, batch_size=batch_size)
 test_gen = ts_gen.flow_from_dataframe(test_df, x_col='filepaths', y_col='labels', target_size=img_size, class_mode='categorical', color_mode='rgb', shuffle=False, batch_size=batch_size)
 
-# ==========================================
-# 3. MODEL ARCHITECTURE (Fine-Tuning)
-# ==========================================
+# MODEL ARCHITECTURE (Fine-Tuning)
 class_count = 2 
 
-# IMPROVEMENT 2: Unfreeze the base model
+# Unfreeze the base model
 base_model = tf.keras.applications.efficientnet.EfficientNetB0(include_top=False, weights="imagenet", input_shape=img_shape)
 base_model.trainable = True # Let the model learn!
 
-# Fine-tune: Freeze the bottom layers, train the top layers
+# Freeze the bottom layers, train the top layers
 # This adapts the model to MRI scans without destroying the pre-trained knowledge
 for layer in base_model.layers[:-20]:
     layer.trainable = False
@@ -117,16 +110,12 @@ model.compile(Adamax(learning_rate=0.0001), loss='categorical_crossentropy', met
 
 model.summary()
 
-# ==========================================
-# 4. TRAINING
-# ==========================================
+# TRAINING
 epochs = 15 # Increased epochs slightly since learning rate is lower
 print("\nStarting Training... (This might take a bit longer, but will be more accurate)")
 history = model.fit(x=train_gen, epochs=epochs, verbose=1, validation_data=valid_gen, shuffle=False)
 
-# ==========================================
-# 5. GRAPHS & EVALUATION
-# ==========================================
+# GRAPHS & EVALUATION
 tr_acc = history.history['accuracy']
 tr_loss = history.history['loss']
 val_acc = history.history['val_accuracy']
@@ -185,9 +174,7 @@ print(classification_report(test_gen.classes, y_pred, target_names=classes))
 model.save('Brain_Tumor_Binary.h5')
 print("Model saved as 'Brain_Tumor_Binary.h5'")
 
-# ==========================================
-# 6. TUMOR DETECTION (HEATMAP)
-# ==========================================
+# TUMOR DETECTION (HEATMAP)
 loaded_model = tf.keras.models.load_model('Brain_Tumor_Binary.h5', compile=False)
 loaded_model.compile(Adamax(learning_rate=0.0001), loss='categorical_crossentropy', metrics=['accuracy'])
 
